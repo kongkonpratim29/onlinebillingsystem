@@ -1,0 +1,58 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Create MySQL Database",
+			"type": "shell",
+			"command": "mysql -u root -ppassword < server/database.sql"
+		},
+		{
+			"label": "Step 1 - Create MySQL Database",
+			"type": "shell",
+			"command": "mysql -u root -ppassword < \"c:\\Users\\Kongkon\\online billing system\\server\\database.sql\""
+		},
+		{
+			"label": "Create Database",
+			"type": "shell",
+			"command": "mysql -u root -ppassword < server/database.sql",
+			"isBackground": false
+		},
+		{
+			"label": "Step 1 - Create MySQL Database",
+			"type": "shell",
+			"command": "mysql",
+			"args": [
+				"-u",
+				"root",
+				"-ppassword",
+				"-e",
+				"source server/database.sql"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Step1-CreateDB",
+			"type": "shell",
+			"command": "mysql -u root -ppassword < server/database.sql && echo DATABASE CREATED SUCCESSFULLY",
+			"isBackground": false
+		},
+		{
+			"label": "Step 1 - Create MySQL Database",
+			"type": "shell",
+			"command": "mysql -u root -ppassword < server/database.sql && echo ✅ Database created successfully!",
+			"isBackground": false
+		},
+		{
+			"label": "Step 2 - Install Dependencies",
+			"type": "shell",
+			"command": "cd server && npm install",
+			"isBackground": false
+		},
+		{
+			"label": "Step 3 - Start Server",
+			"type": "shell",
+			"command": "cd server && npm start",
+			"isBackground": true
+		}
+	]
+}

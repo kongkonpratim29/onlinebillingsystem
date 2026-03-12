@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Billing System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ===== Animated Background ===== */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0d47a1);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Particles */
+        .login-screen .particles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .login-screen .particles span {
+            position: absolute;
+            display: block;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+        }
+        .login-screen .particles span:nth-child(1)  { left: 10%; width: 80px; height: 80px; animation-duration: 20s; animation-delay: 0s; }
+        .login-screen .particles span:nth-child(2)  { left: 25%; width: 30px; height: 30px; animation-duration: 25s; animation-delay: 2s; }
+        .login-screen .particles span:nth-child(3)  { left: 40%; width: 60px; height: 60px; animation-duration: 18s; animation-delay: 4s; }
+        .login-screen .particles span:nth-child(4)  { left: 55%; width: 40px; height: 40px; animation-duration: 22s; animation-delay: 0s; }
+        .login-screen .particles span:nth-child(5)  { left: 70%; width: 50px; height: 50px; animation-duration: 30s; animation-delay: 3s; }
+        .login-screen .particles span:nth-child(6)  { left: 85%; width: 70px; height: 70px; animation-duration: 16s; animation-delay: 7s; }
+        .login-screen .particles span:nth-child(7)  { left: 5%;  width: 45px; height: 45px; animation-duration: 28s; animation-delay: 5s; }
+        .login-screen .particles span:nth-child(8)  { left: 60%; width: 25px; height: 25px; animation-duration: 35s; animation-delay: 1s; }
+        .login-screen .particles span:nth-child(9)  { left: 35%; width: 55px; height: 55px; animation-duration: 19s; animation-delay: 6s; }
+        .login-screen .particles span:nth-child(10) { left: 80%; width: 35px; height: 35px; animation-duration: 24s; animation-delay: 8s; }
+
+        @keyframes floatUp {
+            0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-150vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Glassmorphism Login Card */
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(30px) scale(0.96);
+        }
+        @keyframes cardAppear {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .login-header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #00897b 100%);
+            background-size: 200% 200%;
+            animation: headerGlow 6s ease infinite;
+            color: #fff;
+            padding: 35px 30px;
+            text-align: center;
+            position: relative;
+        }
+        @keyframes headerGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .login-header p {
+            opacity: 0.85;
+            font-size: 14px;
+        }
+        .login-logo {
+            font-size: 52px;
+            margin-bottom: 10px;
+            display: inline-block;
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .login-body {
+            padding: 30px;
+        }
+        .login-body .form-group {
+            margin-bottom: 20px;
+            animation: fieldSlideIn 0.6s ease forwards;
+            opacity: 0;
+            transform: translateX(-15px);
+        }
+        .login-body .form-group:nth-child(1) { animation-delay: 0.3s; }
+        .login-body .form-group:nth-child(2) { animation-delay: 0.45s; }
+        @keyframes fieldSlideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .login-body label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        .login-body input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
+            background: rgba(255,255,255,0.7);
+        }
+        .login-body input:focus {
+            border-color: #1a237e;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(26, 35, 126, 0.12);
+        }
+        .login-error {
+            color: #d32f2f;
+            font-size: 13px;
+            min-height: 20px;
+            margin-bottom: 10px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1a237e, #283593, #00897b);
+            background-size: 200% 200%;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: fieldSlideIn 0.6s ease 0.6s forwards;
+            opacity: 0;
+            transform: translateX(-15px);
+            position: relative;
+            overflow: hidden;
+        }
+        .login-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(26,35,126,0.45);
+        }
+        .login-btn:hover::after {
+            transform: translateX(100%);
+        }
+        .login-footer {
+            text-align: center;
+            padding: 15px 30px 25px;
+            color: #999;
+            font-size: 12px;
+        }
+        /* Quick Actions Grid */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        .quick-actions .btn {
+            padding: 12px 10px;
+            font-size: 13px;
+            text-align: center;
+        }
+        /* Dashboard grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Text link */
+        .text-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .text-link:hover {
+            text-decoration: underline;
+        }
+        /* Checkbox grid */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        /* Alert */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .alert-warning {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffcc80;
+        }
+        .alert-danger {
+            background: #fce4ec;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .mt-1 { margin-top: 10px; }
+        .mt-2 { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div id="loginScreen" class="login-screen">
+        <!-- Floating Particles -->
+        <div class="particles">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">📊</div>
+                <h1>Online Billing System</h1>
+                <p>Online Billing & Accounting System</p>
+            </div>
+            <div class="login-body">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password">
+                </div>
+                <div class="login-error" id="loginError"></div>
+                <button class="login-btn" id="loginBtn">Sign In</button>
+            </div>
+            <div class="login-footer">
+                Default: <strong>admin</strong> / <strong>admin123</strong><br>
+                Online Billing System v1.0 &copy; 2025<br>
+                <small>Design and Developed by Kongkon Pratim Saikia</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN APP ===== -->
+    <div id="appContainer" class="app-container" style="display:none">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📊 Online Billing</h2>
+                <small>System</small>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item" data-page="accounting">
+                    <span class="nav-icon">📒</span>
+                    <span class="nav-text">Accounting</span>
+                </div>
+                <div class="nav-item" data-page="inventory">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-text">Inventory</span>
+                </div>
+                <div class="nav-item" data-page="taxation">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">GST & Taxation</span>
+                </div>
+                <div class="nav-item" data-page="payroll">
+                    <span class="nav-icon">💼</span>
+                    <span class="nav-text">Payroll</span>
+                </div>
+                <div class="nav-item" data-page="banking">
+                    <span class="nav-icon">🏦</span>
+                    <span class="nav-text">Banking</span>
+                </div>
+                <div class="nav-item" data-page="reports">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">MIS Reports</span>
+                </div>
+                <div class="nav-item" data-page="sync">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-text">Data Sync</span>
+                </div>
+                <div class="nav-item" data-page="users">
+                    <span class="nav-icon">🔒</span>
+                    <span class="nav-text">Security & Users</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: rgba(255,255,255,0.6); text-align: center;">
+                    Online Billing System v1.0<br>
+                    <span style="font-size: 10px; opacity: 0.8;">Design and Developed by Kongkon Pratim Saikia</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Sidebar overlay for mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content Area -->
+        <div class="main-area">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+                    <h2 id="pageTitle">Dashboard</h2>
+                </div>
+                <div class="header-right">
+                    <span id="currentDateTime" class="header-datetime"></span>
+                    <div class="user-menu">
+                        <span id="currentUserName">Admin</span>
+                        <span class="badge badge-primary" id="currentUserRole">admin</span>
+                        <button class="btn btn-outline btn-sm" onclick="app.logout()">Logout</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="content" id="mainContent">
+                <!-- Dynamic content loaded here -->
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== GLOBAL MODAL ===== -->
+    <div class="modal" id="appModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== SCRIPTS (load order matters) ===== -->
+    <script src="js/database.js"></script>
+    <script src="js/modules/auth.js"></script>
+    <script src="js/modules/accounting.js"></script>
+    <script src="js/modules/inventory.js"></script>
+    <script src="js/modules/taxation.js"></script>
+    <script src="js/modules/payroll.js"></script>
+    <script src="js/modules/banking.js"></script>
+    <script src="js/modules/reports.js"></script>
+    <script src="js/modules/sync.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
