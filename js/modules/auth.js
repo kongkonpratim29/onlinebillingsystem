@@ -276,16 +276,16 @@ class AuthModule {
 
     renderPermissionsMatrix() {
         const permissions = [
-            'View Dashboard', 'Manage Accounting', 'Create Vouchers', 'Manage Inventory',
-            'GST & Taxation', 'Payroll Management', 'Banking', 'MIS Reports',
+            'View Dashboard', 'Manage Inventory', 'Sales Management',
+            'Payroll Management', 'Banking', 'MIS Reports',
             'User Management', 'Data Sync', 'Backup & Restore'
         ];
         const roles = {
             admin: true,
-            manager: [true, true, true, true, true, true, true, true, false, false, false],
-            accountant: [true, true, true, false, true, false, true, true, false, false, false],
-            dataEntry: [true, false, true, true, false, false, false, false, false, false, false],
-            viewer: [true, false, false, false, false, false, false, true, false, false, false]
+            manager: [true, true, true, true, true, true, false, false, false],
+            accountant: [true, false, true, false, true, true, false, false, false],
+            dataEntry: [true, true, true, false, false, false, false, false, false],
+            viewer: [true, false, false, false, false, true, false, false, false]
         };
         return permissions.map((p, i) => `
             <tr>

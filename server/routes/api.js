@@ -9,28 +9,33 @@ const { pool } = require('../db');
 
 // Valid table names (whitelist to prevent SQL injection)
 const VALID_TABLES = new Set([
-    'users', 'ledgers', 'vouchers', 'stockGroups', 'stockItems',
+    'users', 'stockGroups', 'stockItems',
     'stockMovements', 'employees', 'attendance', 'salaryRecords',
-    'bankAccounts', 'bankTransactions', 'reconciliations', 'taxEntries',
-    'gstReturns', 'auditTrail', 'syncLog', 'companies', 'settings'
+    'bankAccounts', 'bankTransactions', 'reconciliations',
+    'auditTrail', 'syncLog', 'companies', 'settings',
+    'customers', 'quotes', 'salesOrders', 'invoices',
+    'recurringInvoices', 'deliveryChallans', 'paymentsReceived', 'creditNotes',
+    'salesItems'
 ]);
 
 // Columns that hold JSON data and need parsing/stringifying
 const JSON_COLUMNS = {
     users: ['permissions'],
-    vouchers: ['entries'],
     salaryRecords: ['earnings', 'deductions'],
     reconciliations: ['data'],
-    gstReturns: ['data'],
     companies: ['data'],
-    settings: ['value']
+    settings: ['value'],
+    quotes: ['items'],
+    salesOrders: ['items'],
+    invoices: ['items'],
+    recurringInvoices: ['items'],
+    deliveryChallans: ['items'],
+    creditNotes: ['items']
 };
 
 // Known columns per table for insert/update operations
 const TABLE_COLUMNS = {
     users: ['username', 'password', 'fullName', 'role', 'email', 'active', 'permissions'],
-    ledgers: ['name', 'group', 'type', 'openingBalance', 'address', 'gstin', 'pan', 'phone', 'email'],
-    vouchers: ['type', 'date', 'voucherNo', 'narration', 'entries'],
     stockGroups: ['name', 'parent'],
     stockItems: ['name', 'group', 'unit', 'location', 'currentStock', 'rate', 'reorderLevel', 'hsnCode', 'gstRate'],
     stockMovements: ['itemId', 'date', 'type', 'quantity', 'rate', 'location', 'reference', 'narration'],
@@ -40,12 +45,19 @@ const TABLE_COLUMNS = {
     bankAccounts: ['bankName', 'accountNo', 'ifsc', 'branch', 'accountType', 'balance', 'openingBalance'],
     bankTransactions: ['accountId', 'date', 'type', 'amount', 'description', 'reference', 'paymentMode', 'chequeNo', 'reconciled', 'reconciledDate'],
     reconciliations: ['accountId', 'date', 'bankBalance', 'bookBalance', 'difference', 'data'],
-    taxEntries: ['type', 'subType', 'transType', 'supplyType', 'date', 'invoiceNo', 'party', 'gstin', 'hsn', 'taxableAmount', 'cgst', 'sgst', 'igst', 'cess', 'totalAmount', 'gstRate', 'period', 'tdsSection', 'tdsRate', 'tdsAmount', 'amount'],
-    gstReturns: ['returnType', 'period', 'status', 'filingDate', 'data'],
     auditTrail: ['userId', 'action', 'details', 'timestamp', 'ipAddress'],
     syncLog: ['type', 'details', 'timestamp', 'user'],
     companies: ['name', 'address', 'gstin', 'pan', 'phone', 'email', 'data'],
-    settings: ['key', 'value']
+    settings: ['key', 'value'],
+    customers: ['name', 'company', 'email', 'phone', 'gstin', 'pan', 'billingAddress', 'shippingAddress', 'creditLimit', 'paymentTerms', 'active'],
+    quotes: ['quoteNo', 'customerId', 'customerName', 'date', 'expiryDate', 'items', 'subtotal', 'taxAmount', 'discount', 'totalAmount', 'notes', 'status'],
+    salesOrders: ['orderNo', 'quoteId', 'customerId', 'customerName', 'date', 'deliveryDate', 'items', 'subtotal', 'taxAmount', 'discount', 'totalAmount', 'notes', 'status'],
+    invoices: ['invoiceNo', 'orderId', 'customerId', 'customerName', 'date', 'dueDate', 'items', 'subtotal', 'taxAmount', 'discount', 'totalAmount', 'paidAmount', 'notes', 'status'],
+    recurringInvoices: ['profileName', 'customerId', 'customerName', 'frequency', 'startDate', 'endDate', 'nextDate', 'items', 'subtotal', 'taxAmount', 'discount', 'totalAmount', 'notes', 'status'],
+    deliveryChallans: ['challanNo', 'orderId', 'customerId', 'customerName', 'date', 'items', 'vehicleNo', 'transporterName', 'notes', 'status'],
+    paymentsReceived: ['paymentNo', 'customerId', 'customerName', 'invoiceId', 'date', 'amount', 'paymentMode', 'reference', 'bankAccountId', 'notes'],
+    creditNotes: ['creditNoteNo', 'customerId', 'customerName', 'invoiceId', 'date', 'items', 'subtotal', 'taxAmount', 'totalAmount', 'reason', 'status'],
+    salesItems: ['description', 'rate', 'unit', 'hsnCode']
 };
 
 // Validate table name
@@ -91,6 +103,49 @@ function prepareData(tableName, data) {
 
     return { fields, values };
 }
+
+// ---- Health check (registered BEFORE dynamic :table routes) ----
+
+const fs = require('fs');
+const path = require('path');
+
+router.get('/health', async (req, res) => {
+    const frontendRoot = process.env.PUBLIC_DIR
+        ? path.resolve(process.env.PUBLIC_DIR)
+        : path.join(__dirname, '..', '..');
+    const indexPath = path.join(frontendRoot, 'index.html');
+    const checks = {
+        server: true,
+        frontendRoot: frontendRoot,
+        indexHtmlExists: fs.existsSync(indexPath),
+        __dirname: __dirname,
+        envPublicDir: process.env.PUBLIC_DIR || '(not set)',
+        database: false,
+        usersTableExists: false,
+        adminUserExists: false
+    };
+    try {
+        const [rows] = await pool.query('SELECT 1');
+        checks.database = true;
+    } catch (e) { checks.databaseError = e.message; }
+    if (checks.database) {
+        try {
+            const [rows] = await pool.query("SHOW TABLES LIKE 'users'");
+            checks.usersTableExists = rows.length > 0;
+        } catch (e) { checks.usersTableError = e.message; }
+    }
+    if (checks.usersTableExists) {
+        try {
+            const [rows] = await pool.query("SELECT id, username, role FROM users WHERE username = 'admin'");
+            checks.adminUserExists = rows.length > 0;
+            if (rows.length > 0) checks.adminUser = rows[0];
+        } catch (e) { checks.adminUserError = e.message; }
+    }
+    try {
+        checks.frontendFiles = fs.readdirSync(frontendRoot).slice(0, 20);
+    } catch (e) { checks.frontendFilesError = e.message; }
+    res.json(checks);
+});
 
 // ---- Export/Import (registered BEFORE dynamic :table routes) ----
 

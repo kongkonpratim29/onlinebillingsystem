@@ -123,6 +123,15 @@ class SyncModule {
         if (!container) return;
 
         const stores = [
+            { key: 'customers', label: 'Customers' },
+            { key: 'quotes', label: 'Quotes' },
+            { key: 'salesOrders', label: 'Sales Orders' },
+            { key: 'invoices', label: 'Invoices' },
+            { key: 'recurringInvoices', label: 'Recurring Invoices' },
+            { key: 'deliveryChallans', label: 'Delivery Challans' },
+            { key: 'paymentsReceived', label: 'Payments Received' },
+            { key: 'creditNotes', label: 'Credit Notes' },
+            { key: 'salesItems', label: 'Saved Sales Items' },
             { key: 'ledgers', label: 'Ledgers' },
             { key: 'vouchers', label: 'Vouchers' },
             { key: 'stockGroups', label: 'Stock Groups' },
@@ -133,8 +142,6 @@ class SyncModule {
             { key: 'salaryRecords', label: 'Salary Records' },
             { key: 'bankAccounts', label: 'Bank Accounts' },
             { key: 'bankTransactions', label: 'Bank Transactions' },
-            { key: 'taxEntries', label: 'Tax Entries' },
-            { key: 'gstReturns', label: 'GST Returns' },
             { key: 'users', label: 'Users' },
             { key: 'settings', label: 'Settings' },
             { key: 'companies', label: 'Companies' }

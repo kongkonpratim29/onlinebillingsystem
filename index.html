@@ -272,7 +272,7 @@
             <div class="login-header">
                 <div class="login-logo">📊</div>
                 <h1>Online Billing System</h1>
-                <p>Online Billing & Accounting System</p>
+                <p>Fast invoicing. Easy tracking. Better business</p>
             </div>
             <div class="login-body">
                 <div class="form-group">
@@ -307,17 +307,13 @@
                     <span class="nav-icon">🏠</span>
                     <span class="nav-text">Dashboard</span>
                 </div>
-                <div class="nav-item" data-page="accounting">
-                    <span class="nav-icon">📒</span>
-                    <span class="nav-text">Accounting</span>
-                </div>
                 <div class="nav-item" data-page="inventory">
                     <span class="nav-icon">📦</span>
                     <span class="nav-text">Inventory</span>
                 </div>
-                <div class="nav-item" data-page="taxation">
-                    <span class="nav-icon">📋</span>
-                    <span class="nav-text">GST & Taxation</span>
+                <div class="nav-item" data-page="sales">
+                    <span class="nav-icon">🛒</span>
+                    <span class="nav-text">Sales</span>
                 </div>
                 <div class="nav-item" data-page="payroll">
                     <span class="nav-icon">💼</span>
@@ -391,11 +387,12 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- ===== SCRIPTS (load order matters) ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
     <script src="js/database.js"></script>
     <script src="js/modules/auth.js"></script>
-    <script src="js/modules/accounting.js"></script>
     <script src="js/modules/inventory.js"></script>
-    <script src="js/modules/taxation.js"></script>
+    <script src="js/modules/sales.js"></script>
     <script src="js/modules/payroll.js"></script>
     <script src="js/modules/banking.js"></script>
     <script src="js/modules/reports.js"></script>

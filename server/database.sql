@@ -2,15 +2,15 @@
 -- Online Billing System - MySQL Database Schema
 -- 
 -- For LOCAL setup:    mysql -u root -p < database.sql
--- For HOSTINGER:      Import via phpMyAdmin (skip the CREATE/USE DATABASE lines)
---                     Comment out or remove the 2 lines below before importing
+-- For HOSTINGER:      Import via phpMyAdmin (the CREATE/USE DATABASE lines are commented out)
+--                     Your Hostinger database is already selected in phpMyAdmin
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS online_billing_system
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+-- CREATE DATABASE IF NOT EXISTS online_billing_system
+--   CHARACTER SET utf8mb4
+--   COLLATE utf8mb4_unicode_ci;
 
-USE online_billing_system;
+-- USE online_billing_system;
 
 -- ---- Users ----
 CREATE TABLE IF NOT EXISTS users (
@@ -314,6 +314,195 @@ CREATE TABLE IF NOT EXISTS settings (
     value JSON,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ---- Customers ----
+CREATE TABLE IF NOT EXISTS customers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    company VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(30),
+    gstin VARCHAR(20),
+    pan VARCHAR(20),
+    billingAddress TEXT,
+    shippingAddress TEXT,
+    creditLimit DECIMAL(15,2) DEFAULT 0,
+    paymentTerms VARCHAR(50) DEFAULT 'Net 30',
+    active TINYINT(1) DEFAULT 1,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_name (name),
+    INDEX idx_company (company)
+) ENGINE=InnoDB;
+
+-- ---- Quotes ----
+CREATE TABLE IF NOT EXISTS quotes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    quoteNo VARCHAR(50) UNIQUE,
+    customerId INT,
+    customerName VARCHAR(255),
+    date DATE,
+    expiryDate DATE,
+    items JSON,
+    subtotal DECIMAL(15,2) DEFAULT 0,
+    taxAmount DECIMAL(15,2) DEFAULT 0,
+    discount DECIMAL(15,2) DEFAULT 0,
+    totalAmount DECIMAL(15,2) DEFAULT 0,
+    notes TEXT,
+    status VARCHAR(30) DEFAULT 'draft',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_quoteNo (quoteNo),
+    INDEX idx_customerId (customerId),
+    INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- ---- Sales Orders ----
+CREATE TABLE IF NOT EXISTS salesOrders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    orderNo VARCHAR(50) UNIQUE,
+    quoteId INT,
+    customerId INT,
+    customerName VARCHAR(255),
+    date DATE,
+    deliveryDate DATE,
+    items JSON,
+    subtotal DECIMAL(15,2) DEFAULT 0,
+    taxAmount DECIMAL(15,2) DEFAULT 0,
+    discount DECIMAL(15,2) DEFAULT 0,
+    totalAmount DECIMAL(15,2) DEFAULT 0,
+    notes TEXT,
+    status VARCHAR(30) DEFAULT 'confirmed',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_orderNo (orderNo),
+    INDEX idx_customerId (customerId),
+    INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- ---- Invoices ----
+CREATE TABLE IF NOT EXISTS invoices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    invoiceNo VARCHAR(50) UNIQUE,
+    orderId INT,
+    customerId INT,
+    customerName VARCHAR(255),
+    date DATE,
+    dueDate DATE,
+    items JSON,
+    subtotal DECIMAL(15,2) DEFAULT 0,
+    taxAmount DECIMAL(15,2) DEFAULT 0,
+    discount DECIMAL(15,2) DEFAULT 0,
+    totalAmount DECIMAL(15,2) DEFAULT 0,
+    paidAmount DECIMAL(15,2) DEFAULT 0,
+    notes TEXT,
+    status VARCHAR(30) DEFAULT 'unpaid',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_invoiceNo (invoiceNo),
+    INDEX idx_customerId (customerId),
+    INDEX idx_status (status),
+    INDEX idx_dueDate (dueDate)
+) ENGINE=InnoDB;
+
+-- ---- Recurring Invoices ----
+CREATE TABLE IF NOT EXISTS recurringInvoices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    profileName VARCHAR(255),
+    customerId INT,
+    customerName VARCHAR(255),
+    frequency VARCHAR(30) DEFAULT 'monthly',
+    startDate DATE,
+    endDate DATE,
+    nextDate DATE,
+    items JSON,
+    subtotal DECIMAL(15,2) DEFAULT 0,
+    taxAmount DECIMAL(15,2) DEFAULT 0,
+    discount DECIMAL(15,2) DEFAULT 0,
+    totalAmount DECIMAL(15,2) DEFAULT 0,
+    notes TEXT,
+    status VARCHAR(30) DEFAULT 'active',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_customerId (customerId),
+    INDEX idx_status (status),
+    INDEX idx_nextDate (nextDate)
+) ENGINE=InnoDB;
+
+-- ---- Delivery Challans ----
+CREATE TABLE IF NOT EXISTS deliveryChallans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    challanNo VARCHAR(50) UNIQUE,
+    orderId INT,
+    customerId INT,
+    customerName VARCHAR(255),
+    date DATE,
+    items JSON,
+    vehicleNo VARCHAR(50),
+    transporterName VARCHAR(255),
+    notes TEXT,
+    status VARCHAR(30) DEFAULT 'pending',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_challanNo (challanNo),
+    INDEX idx_customerId (customerId),
+    INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- ---- Payments Received ----
+CREATE TABLE IF NOT EXISTS paymentsReceived (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paymentNo VARCHAR(50) UNIQUE,
+    customerId INT,
+    customerName VARCHAR(255),
+    invoiceId INT,
+    date DATE,
+    amount DECIMAL(15,2) DEFAULT 0,
+    paymentMode VARCHAR(30),
+    reference VARCHAR(100),
+    bankAccountId INT,
+    notes TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_paymentNo (paymentNo),
+    INDEX idx_customerId (customerId),
+    INDEX idx_invoiceId (invoiceId),
+    INDEX idx_date (date)
+) ENGINE=InnoDB;
+
+-- ---- Credit Notes ----
+CREATE TABLE IF NOT EXISTS creditNotes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    creditNoteNo VARCHAR(50) UNIQUE,
+    customerId INT,
+    customerName VARCHAR(255),
+    invoiceId INT,
+    date DATE,
+    items JSON,
+    subtotal DECIMAL(15,2) DEFAULT 0,
+    taxAmount DECIMAL(15,2) DEFAULT 0,
+    totalAmount DECIMAL(15,2) DEFAULT 0,
+    reason TEXT,
+    status VARCHAR(30) DEFAULT 'open',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_creditNoteNo (creditNoteNo),
+    INDEX idx_customerId (customerId),
+    INDEX idx_invoiceId (invoiceId),
+    INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- ---- Sales Items (saved line items catalog) ----
+CREATE TABLE IF NOT EXISTS salesItems (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(255) NOT NULL UNIQUE,
+    rate DECIMAL(15,2) DEFAULT 0,
+    unit VARCHAR(30),
+    hsnCode VARCHAR(20),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_description (description)
 ) ENGINE=InnoDB;
 
 -- Default admin user is created automatically by the frontend auth module on first run.

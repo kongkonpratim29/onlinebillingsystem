@@ -10,9 +10,8 @@ class App {
 
         // Module instances
         this.auth = new AuthModule(this.db);
-        this.accounting = new AccountingModule(this.db);
         this.inventory = new InventoryModule(this.db);
-        this.taxation = new TaxationModule(this.db);
+        this.sales = new SalesModule(this.db);
         this.payroll = new PayrollModule(this.db);
         this.banking = new BankingModule(this.db);
         this.reports = new ReportsModule(this.db);
@@ -116,9 +115,8 @@ class App {
         // Update page title
         const titles = {
             'dashboard': 'Dashboard',
-            'accounting': 'Accounting',
             'inventory': 'Inventory Management',
-            'taxation': 'GST & Taxation',
+            'sales': 'Sales',
             'payroll': 'Payroll Management',
             'banking': 'Banking',
             'reports': 'MIS Reports & Analysis',
@@ -134,17 +132,13 @@ class App {
                 mainContent.innerHTML = this.renderDashboard();
                 this.loadDashboard();
                 break;
-            case 'accounting':
-                mainContent.innerHTML = this.accounting.renderPage();
-                this.accounting.loadData();
-                break;
             case 'inventory':
                 mainContent.innerHTML = this.inventory.renderPage();
                 this.inventory.loadData();
                 break;
-            case 'taxation':
-                mainContent.innerHTML = this.taxation.renderPage();
-                this.taxation.loadData();
+            case 'sales':
+                mainContent.innerHTML = this.sales.renderPage();
+                this.sales.loadData();
                 break;
             case 'payroll':
                 mainContent.innerHTML = this.payroll.renderPage();
@@ -186,85 +180,50 @@ class App {
         const detailsEl = document.getElementById('dashDetails');
         if (!statsEl || !detailsEl) return;
 
-        const [ledgers, vouchers, stockItems, employees, bankAccounts, taxEntries] = await Promise.all([
-            this.db.getAll('ledgers'),
-            this.db.getAll('vouchers'),
+        const [stockItems, employees, bankAccounts, customers, invoices] = await Promise.all([
             this.db.getAll('stockItems'),
             this.db.getAll('employees'),
             this.db.getAll('bankAccounts'),
-            this.db.getAll('taxEntries')
+            this.db.getAll('customers'),
+            this.db.getAll('invoices')
         ]);
 
         const bankBalance = bankAccounts.reduce((s, a) => s + (a.balance || 0), 0);
         const stockValue = stockItems.reduce((s, i) => s + ((i.currentStock || 0) * (i.rate || 0)), 0);
-
-        // Sales & purchase totals from vouchers
-        let salesTotal = 0, purchaseTotal = 0;
-        vouchers.forEach(v => {
-            if (v.type === 'Sales') {
-                salesTotal += v.entries ? v.entries.reduce((s, e) => e.type === 'debit' ? s + e.amount : s, 0) : 0;
-            } else if (v.type === 'Purchase') {
-                purchaseTotal += v.entries ? v.entries.reduce((s, e) => e.type === 'debit' ? s + e.amount : s, 0) : 0;
-            }
-        });
+        const totalReceivable = invoices.filter(i => i.status !== 'paid').reduce((s, i) => s + ((i.totalAmount || 0) - (i.paidAmount || 0)), 0);
 
         statsEl.innerHTML = `
-            <div class="stat-card" onclick="app.navigateTo('accounting')">
-                <div class="stat-icon blue">📒</div>
-                <div class="stat-info"><h4>${ledgers.length}</h4><p>Ledgers</p></div>
-            </div>
-            <div class="stat-card" onclick="app.navigateTo('accounting')">
-                <div class="stat-icon green">📝</div>
-                <div class="stat-info"><h4>${vouchers.length}</h4><p>Vouchers</p></div>
-            </div>
             <div class="stat-card" onclick="app.navigateTo('banking')">
                 <div class="stat-icon blue">🏦</div>
                 <div class="stat-info"><h4>₹${this.formatNumber(bankBalance)}</h4><p>Bank Balance</p></div>
             </div>
+            <div class="stat-card" onclick="app.navigateTo('sales')">
+                <div class="stat-icon orange">🛒</div>
+                <div class="stat-info"><h4>₹${this.formatNumber(totalReceivable)}</h4><p>Receivables</p></div>
+            </div>
+            <div class="stat-card" onclick="app.navigateTo('sales')">
+                <div class="stat-icon green">👤</div>
+                <div class="stat-info"><h4>${customers.length}</h4><p>Customers</p></div>
+            </div>
             <div class="stat-card" onclick="app.navigateTo('inventory')">
-                <div class="stat-icon orange">📦</div>
-                <div class="stat-info"><h4>₹${this.formatNumber(stockValue)}</h4><p>Stock Value</p></div>
-            </div>
-            <div class="stat-card" onclick="app.navigateTo('accounting')">
-                <div class="stat-icon green">💰</div>
-                <div class="stat-info"><h4>₹${this.formatNumber(salesTotal)}</h4><p>Total Sales</p></div>
-            </div>
-            <div class="stat-card" onclick="app.navigateTo('accounting')">
-                <div class="stat-icon red">🛒</div>
-                <div class="stat-info"><h4>₹${this.formatNumber(purchaseTotal)}</h4><p>Total Purchases</p></div>
-            </div>
-            <div class="stat-card" onclick="app.navigateTo('payroll')">
-                <div class="stat-icon blue">👥</div>
+                <div class="stat-icon blue">📦</div>
                 <div class="stat-info"><h4>${employees.length}</h4><p>Employees</p></div>
             </div>
-            <div class="stat-card" onclick="app.navigateTo('taxation')">
-                <div class="stat-icon orange">📋</div>
-                <div class="stat-info"><h4>${taxEntries.length}</h4><p>Tax Entries</p></div>
+            <div class="stat-card" onclick="app.navigateTo('banking')">
+                <div class="stat-icon green">🏦</div>
+                <div class="stat-info"><h4>${bankAccounts.length}</h4><p>Bank Accounts</p></div>
             </div>`;
 
-        // Recent Vouchers & Low Stock
-        const recentVouchers = vouchers.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
         const lowStock = stockItems.filter(i => (i.currentStock || 0) <= (i.reorderLevel || 0) && (i.reorderLevel || 0) > 0);
 
         detailsEl.innerHTML = `
             <div class="card">
-                <div class="card-header"><h3>Recent Vouchers</h3><a href="#" onclick="app.navigateTo('accounting');return false" class="text-link">View All →</a></div>
-                <div class="card-body">
-                    ${recentVouchers.length ? `<table class="data-table"><thead><tr><th>No.</th><th>Date</th><th>Type</th><th class="amount">Amount</th></tr></thead><tbody>
-                        ${recentVouchers.map(v => {
-                            const total = v.entries ? v.entries.reduce((s, e) => e.type === 'debit' ? s + e.amount : s, 0) : 0;
-                            return `<tr><td>${this.escapeHtml(v.voucherNo)}</td><td>${v.date}</td><td><span class="badge badge-info">${this.escapeHtml(v.type)}</span></td><td class="amount">₹${this.formatNumber(total)}</td></tr>`;
-                        }).join('')}</tbody></table>` : '<p class="text-muted">No vouchers yet. Start by creating ledgers and vouchers in Accounting.</p>'}
-                </div>
-            </div>
-            <div class="card">
                 <div class="card-header"><h3>Quick Actions</h3></div>
                 <div class="card-body">
                     <div class="quick-actions">
-                        <button class="btn btn-primary" onclick="app.navigateTo('accounting')">📒 New Voucher</button>
+                        <button class="btn btn-primary" onclick="app.navigateTo('sales')">🛒 Sales</button>
                         <button class="btn btn-secondary" onclick="app.navigateTo('inventory')">📦 Add Stock</button>
                         <button class="btn btn-outline" onclick="app.navigateTo('banking')">🏦 Bank Transaction</button>
-                        <button class="btn btn-outline" onclick="app.navigateTo('taxation')">📋 GST Entry</button>
                         <button class="btn btn-outline" onclick="app.navigateTo('payroll')">💼 Process Salary</button>
                         <button class="btn btn-outline" onclick="app.navigateTo('reports')">📊 View Reports</button>
                     </div>
@@ -309,7 +268,15 @@ class App {
             'report-bs-tab': () => this.reports.loadBalanceSheetReport(),
             'report-pnl-tab': () => this.reports.loadProfitLossReport(),
             'report-cashflow-tab': () => this.reports.loadCashFlowReport(),
-            'report-ratio-tab': () => this.reports.loadRatioAnalysis()
+            'report-ratio-tab': () => this.reports.loadRatioAnalysis(),
+            'sales-customers-tab': () => this.sales.loadCustomersTable(),
+            'sales-quotes-tab': () => this.sales.loadQuotesTable(),
+            'sales-orders-tab': () => this.sales.loadOrdersTable(),
+            'sales-invoices-tab': () => this.sales.loadInvoicesTable(),
+            'sales-recurring-tab': () => this.sales.loadRecurringTable(),
+            'sales-challans-tab': () => this.sales.loadChallansTable(),
+            'sales-payments-tab': () => this.sales.loadPaymentsTable(),
+            'sales-creditnotes-tab': () => this.sales.loadCreditNotesTable()
         };
         if (loaders[tabId]) loaders[tabId]();
     }
